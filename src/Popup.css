@@ -1,0 +1,44 @@
+.leaflet-popup-content-wrapper {
+  background-color: #ffd1dc; /* pastel pink */
+  color: #333; /* dark text */
+  border-radius: 15px;
+  padding: 10px;
+  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content-wrapper h3 {
+  color: #6d6875; /* dark pastel purple */
+}
+
+.leaflet-popup-content-wrapper p {
+  color: #6d6875; /* dark pastel purple */
+}
+
+.leaflet-popup-content-wrapper button {
+  background-color: #6d6875; /* dark pastel purple */
+  color: #ffd1dc; /* pastel pink */
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+
+.leaflet-popup-content-wrapper button:hover {
+  background-color: #5a5673; /* slightly darker purple */
+  cursor: pointer;
+}
+
+.leaflet-popup-content-wrapper textarea {
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid #6d6875; /* dark pastel purple */
+  padding: 5px;
+}
+
+.leaflet-popup-content-wrapper input[type='file'] {
+  color: #6d6875; /* dark pastel purple */
+}
+
+.location-list {
+  max-height: 500px; /* Adjust as needed */
+  overflow-y: auto;
+}
