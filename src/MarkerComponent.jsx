@@ -9,7 +9,6 @@ const MarkerComponent = ({ locations }) => {
         position={location.coordinates}
         onClick={() => console.log('Marker clicked!')}
       >
-        {/* <PopupComponent locationId={location.id} location={location} /> */}
         <PopupComponent location={location} />
       </Marker>
     );

@@ -21,7 +21,12 @@ const SearchBar = ({ onSearch }) => {
           aria-describedby="basic-addon2"
           name="address"
         />
-        <Button variant="outline-primary" id="button-addon2" type="submit">
+        <Button
+          variant="outline-primary"
+          id="button-addon2"
+          type="submit"
+          disabled={!address}
+        >
           Search
         </Button>
       </InputGroup>

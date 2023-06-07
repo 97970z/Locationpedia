@@ -11,6 +11,7 @@ async function initializeFirestore(lat, lng) {
   const docRef = await addDoc(collection(firestore, 'locations'), {
     name: 'location name',
     description: 'location description',
+    country: 'country',
     coordinates: {
       lat: lat,
       lng: lng,
