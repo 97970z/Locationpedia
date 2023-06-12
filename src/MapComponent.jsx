@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, useMapEvents, GeoJSON } from 'react-leaflet';
-import MarkerComponent from './MarkerComponent';
+import MarkerClusterGroupComponent from './MarkerClusterGroupComponent';
 import SearchBar from './SearchBar';
 import MapUpdater from './MapUpdater';
 import LocationForm from './LocationForm';
@@ -142,20 +142,6 @@ const MapComponent = ({ currentLocation }) => {
     }
   };
 
-  const debounce = (func, wait) => {
-    let timeout;
-
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  };
-
   const handleSearch = _.debounce(async (address) => {
     const response = await getGeoData(address);
     if (response) {
@@ -181,7 +167,8 @@ const MapComponent = ({ currentLocation }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <MarkerComponent locations={locations} />
+        {/* <MarkerComponent locations={locations} /> */}
+        <MarkerClusterGroupComponent locations={locations} />
         <ClickEventHandler onClick={handleMapClick} />
         <MapUpdater center={center} zoom={defaultZoom} />
 
