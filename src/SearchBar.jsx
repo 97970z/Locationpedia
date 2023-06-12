@@ -16,8 +16,8 @@ const SearchBar = ({ onSearch }) => {
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Search for an address"
-          aria-label="Search for an address"
+          placeholder="주소를 입력하세요"
+          aria-label="주소를 입력하세요"
           aria-describedby="basic-addon2"
           name="address"
         />

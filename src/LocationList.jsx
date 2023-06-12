@@ -18,9 +18,7 @@ import {
 
 const LocationList = ({ onMoveLocation }) => {
   const [locations, setLocations] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [currentPages, setCurrentPages] = useState({});
-  const locationsPerPage = 7;
 
   useEffect(() => {
     const q = query(collection(firestore, 'locations'));
@@ -30,7 +28,7 @@ const LocationList = ({ onMoveLocation }) => {
         id: doc.id,
         ...doc.data(),
       }));
-      console.log('New locations:', newLocations);
+
       setLocations(newLocations);
     });
 

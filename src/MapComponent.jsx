@@ -1,23 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { MapContainer, TileLayer, useMapEvents, GeoJSON } from 'react-leaflet';
+import { Button } from 'react-bootstrap';
+import {
+  MapContainer,
+  TileLayer,
+  useMapEvents,
+  GeoJSON,
+  useMap,
+} from 'react-leaflet';
+import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
 import MarkerClusterGroupComponent from './MarkerClusterGroupComponent';
 import SearchBar from './SearchBar';
 import MapUpdater from './MapUpdater';
 import LocationForm from './LocationForm';
 import { firestore } from './firebase';
-import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
-
 import _ from 'lodash';
 
-const MapComponent = ({ currentLocation }) => {
-  const defaultCenter = [37.5666791, 126.9782914];
-  const defaultZoom = 15;
-  const maxBounds = [
-    [-65, -180],
-    [65, 180],
-  ];
+const defaultCenter = [37.5666791, 126.9782914];
+const defaultZoom = 15;
+const maxBounds = [
+  [-65, -180],
+  [65, 180],
+];
 
+const MapComponent = ({ currentLocation }) => {
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [locations, setLocations] = useState([]);
   const [zoom, setZoom] = useState(defaultZoom);
   const [clickedLocation, setClickedLocation] = useState(null);
@@ -29,12 +36,20 @@ const MapComponent = ({ currentLocation }) => {
     description: '',
   });
 
-  const handleCloseOffCanvas = () => setShowOffCanvas(false);
-  const handleShowOffCanvas = () => setShowOffCanvas(true);
-
-  const handleChange = (e) => {
-    setLocationData({ ...locationData, [e.target.name]: e.target.value });
-  };
+  useEffect(() => {
+    const fetchLocations = async () => {
+      const q = query(collection(firestore, 'locations'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const newLocations = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setLocations(newLocations);
+      });
+      return () => unsubscribe();
+    };
+    fetchLocations();
+  }, []);
 
   useEffect(() => {
     if (currentLocation) {
@@ -46,23 +61,11 @@ const MapComponent = ({ currentLocation }) => {
     }
   }, [currentLocation]);
 
-  useEffect(() => {
-    const q = query(collection(firestore, 'locations'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newLocations = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      console.log('New locations:', newLocations);
-      setLocations(newLocations);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  const handleCloseOffCanvas = () => setShowOffCanvas(false);
+  const handleShowOffCanvas = () => setShowOffCanvas(true);
+  const handleChange = (e) => {
+    setLocationData({ ...locationData, [e.target.name]: e.target.value });
+  };
 
   const initializeFirestore = useCallback(async function (
     lat,
@@ -153,8 +156,20 @@ const MapComponent = ({ currentLocation }) => {
     }
   }, 500);
 
+  const handleMyLocationClick = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setMapCenter([latitude, longitude]);
+      });
+    } else {
+      console.log('Geolocation is not supported by this browser.');
+    }
+  };
+
   return (
     <>
+      <Button onClick={handleMyLocationClick}>내 위치</Button>
       <MapContainer
         center={center}
         zoom={defaultZoom}
@@ -167,7 +182,7 @@ const MapComponent = ({ currentLocation }) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        {/* <MarkerComponent locations={locations} /> */}
+        <UpdateMap center={mapCenter} />
         <MarkerClusterGroupComponent locations={locations} />
         <ClickEventHandler onClick={handleMapClick} />
         <MapUpdater center={center} zoom={defaultZoom} />
@@ -197,6 +212,12 @@ const MapComponent = ({ currentLocation }) => {
     </>
   );
 };
+
+function UpdateMap({ center }) {
+  const map = useMap();
+  map.flyTo(center);
+  return null;
+}
 
 const ClickEventHandler = ({ onClick }) => {
   const map = useMapEvents({
