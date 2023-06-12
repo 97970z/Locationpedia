@@ -19,6 +19,7 @@ import {
 const LocationList = ({ onMoveLocation }) => {
   const [locations, setLocations] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentPages, setCurrentPages] = useState({});
   const locationsPerPage = 7;
 
   useEffect(() => {
@@ -38,6 +39,14 @@ const LocationList = ({ onMoveLocation }) => {
     };
   }, []);
 
+  const handlePageChange = (tab, pageNumber) => {
+    setCurrentPages((prevPages) => ({ ...prevPages, [tab]: pageNumber }));
+  };
+
+  const handleTabSelect = (tab) => {
+    setCurrentPages((prevPages) => ({ ...prevPages, [tab]: 1 }));
+  };
+
   const handleMoveLocation = (location) => {
     onMoveLocation(location);
     console.log(`Moved to location: ${location.name}`);
@@ -54,7 +63,9 @@ const LocationList = ({ onMoveLocation }) => {
 
   const countries = [...new Set(locations.map((location) => location.country))];
 
-  const renderLocationList = (locationsList) => {
+  const renderLocationList = (locationsList, tab) => {
+    const locationsPerPage = 7;
+    const currentPage = currentPages[tab] || 1;
     const indexOfLastLocation = currentPage * locationsPerPage;
     const indexOfFirstLocation = indexOfLastLocation - locationsPerPage;
     const currentLocations = locationsList.slice(
@@ -74,29 +85,8 @@ const LocationList = ({ onMoveLocation }) => {
                 >
                   <strong>{location.name}</strong>{' '}
                 </Accordion>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteLocation(location.id);
-                  }}
-                  style={{ float: 'right' }}
-                >
-                  Delete
-                </Button>
-                <Button
-                  variant="outline-success"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMoveLocation(location);
-                  }}
-                  style={{ float: 'right', marginRight: '5px' }}
-                >
-                  Move
-                </Button>
               </Accordion.Header>
+
               <Accordion.Body>
                 <p>{location.description}</p>
                 <p>국가명: {location.country}</p>
@@ -114,6 +104,26 @@ const LocationList = ({ onMoveLocation }) => {
                     style={{ width: '100px', height: '100px' }}
                   />
                 ))}
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteLocation(location.id);
+                  }}
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMoveLocation(location);
+                  }}
+                >
+                  Move
+                </Button>
               </Accordion.Body>
             </Accordion.Item>
           </Accordion>
@@ -122,35 +132,48 @@ const LocationList = ({ onMoveLocation }) => {
     );
   };
 
-  const pageNumbers = [];
-  for (let i = 1; i <= Math.ceil(locations.length / locationsPerPage); i++) {
-    pageNumbers.push(
-      <Pagination.Item
-        key={i}
-        active={i === currentPage}
-        onClick={() => setCurrentPage(i)}
-      >
-        {i}
-      </Pagination.Item>
-    );
-  }
+  const renderPagination = (locationsList, tab) => {
+    const locationsPerPage = 7;
+    const pageNumbers = [];
+    for (
+      let i = 1;
+      i <= Math.ceil(locationsList.length / locationsPerPage);
+      i++
+    ) {
+      pageNumbers.push(
+        <Pagination.Item
+          key={i}
+          active={i === (currentPages[tab] || 1)}
+          onClick={() => handlePageChange(tab, i)}
+        >
+          {i}
+        </Pagination.Item>
+      );
+    }
+
+    return <Pagination>{pageNumbers}</Pagination>;
+  };
 
   return (
-    <Tabs defaultActiveKey="all" id="location-tabs">
+    <Tabs defaultActiveKey="all" id="location-tabs" onSelect={handleTabSelect}>
       <Tab eventKey="all" title="All">
         <ListGroup className="mt-3 mb-3">
-          {renderLocationList(locations)}
+          {renderLocationList(locations, 'all')}
         </ListGroup>
-        <Pagination>{pageNumbers}</Pagination>
+        {renderPagination(locations, 'all')}
       </Tab>
       {countries.map((country, index) => (
         <Tab eventKey={country} title={country} key={index}>
           <ListGroup className="mt-3 mb-3">
             {renderLocationList(
-              locations.filter((location) => location.country === country)
+              locations.filter((location) => location.country === country),
+              country
             )}
           </ListGroup>
-          <Pagination>{pageNumbers}</Pagination>
+          {renderPagination(
+            locations.filter((location) => location.country === country),
+            country
+          )}
         </Tab>
       ))}
     </Tabs>
