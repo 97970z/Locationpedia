@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { MapContainer, TileLayer, useMapEvents, GeoJSON } from 'react-leaflet';
 import MarkerComponent from './MarkerComponent';
 import SearchBar from './SearchBar';
 import MapUpdater from './MapUpdater';
+import LocationForm from './LocationForm';
 import { firestore } from './firebase';
 import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
-import { Offcanvas, Button, Form } from 'react-bootstrap';
+
+import _ from 'lodash';
 
 const MapComponent = ({ currentLocation }) => {
   const defaultCenter = [37.5666791, 126.9782914];
   const defaultZoom = 15;
+  const maxBounds = [
+    [-65, -180],
+    [65, 180],
+  ];
 
   const [locations, setLocations] = useState([]);
   const [zoom, setZoom] = useState(defaultZoom);
-
   const [clickedLocation, setClickedLocation] = useState(null);
   const [center, setCenter] = useState(defaultCenter);
   const [boundaryData, setBoundaryData] = useState(null);
-
   const [showOffCanvas, setShowOffCanvas] = useState(false);
   const [locationData, setLocationData] = useState({
     name: '',
@@ -60,7 +64,7 @@ const MapComponent = ({ currentLocation }) => {
     };
   }, []);
 
-  async function initializeFirestore(
+  const initializeFirestore = useCallback(async function (
     lat,
     lng,
     locationName,
@@ -80,9 +84,10 @@ const MapComponent = ({ currentLocation }) => {
       photos: [],
     });
     console.log('Document written with ID: ', docRef.id);
-  }
+  },
+  []);
 
-  const handleMarkerClick = async (lat, lng) => {
+  const handleMarkerClick = useCallback(async (lat, lng) => {
     console.log('Marker clicked!');
     const apiKey = import.meta.env.VITE_OPENCAGO_API_KEY;
     const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}&limit=1`;
@@ -104,17 +109,16 @@ const MapComponent = ({ currentLocation }) => {
     } catch (error) {
       console.error('Error fetching location data:', error);
     }
-  };
+  }, []);
 
-  const handleMapClick = async (e) => {
+  const handleMapClick = useCallback(async (e) => {
     const { lat, lng } = e.latlng;
     let country = await handleMarkerClick(lat, lng);
     console.log('Country:', country);
     setClickedLocation({ lat, lng, country });
     handleShowOffCanvas();
-  };
+  }, []);
 
-  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (locationData.name && locationData.description) {
@@ -138,64 +142,38 @@ const MapComponent = ({ currentLocation }) => {
     }
   };
 
-  const handleSearch = async (address) => {
-    const apiKey = import.meta.env.VITE_OPENCAGO_API_KEY;
-    const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
-      address
-    )}&key=${apiKey}&limit=1`;
+  const debounce = (func, wait) => {
+    let timeout;
 
-    try {
-      const response = await axios.get(apiUrl);
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
 
-      if (
-        response.data &&
-        response.data.results &&
-        response.data.results.length > 0
-      ) {
-        const result = response.data.results[0];
-        const lat = result.geometry.lat;
-        const lng = result.geometry.lng;
-        const { southwest, northeast } = result.bounds;
-
-        setCenter([lat, lng]);
-
-        const geoJSONData = {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              geometry: {
-                type: 'Polygon',
-                coordinates: [
-                  [
-                    [southwest.lng, southwest.lat],
-                    [southwest.lng, northeast.lat],
-                    [northeast.lng, northeast.lat],
-                    [northeast.lng, southwest.lat],
-                    [southwest.lng, southwest.lat],
-                  ],
-                ],
-              },
-            },
-          ],
-        };
-
-        console.log('Boundary data:', geoJSONData);
-
-        setBoundaryData(geoJSONData);
-      } else {
-        alert('Location not found');
-      }
-    } catch (error) {
-      console.error('Error fetching location data:', error);
-    }
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   };
+
+  const handleSearch = _.debounce(async (address) => {
+    const response = await getGeoData(address);
+    if (response) {
+      const { result, geoJSONData } = response;
+      setCenter([result.geometry.lat, result.geometry.lng]);
+      setBoundaryData(geoJSONData);
+    } else {
+      alert('Location not found');
+    }
+  }, 500);
 
   return (
     <>
       <MapContainer
         center={center}
         zoom={defaultZoom}
+        maxBounds={maxBounds}
+        maxBoundsViscosity={1.0}
         style={{ height: '700px', width: '100%' }}
         className="map-container mb-3 mt-3 w-100 mx-auto border border-primary rounded shadow"
       >
@@ -222,41 +200,13 @@ const MapComponent = ({ currentLocation }) => {
         )}
       </MapContainer>
       <SearchBar onSearch={handleSearch} />
-      <Offcanvas show={showOffCanvas} onHide={handleCloseOffCanvas}>
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Add New Location</Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Location Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter Location Name"
-                name="name"
-                value={locationData.name}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Enter Location Description"
-                name="description"
-                value={locationData.description}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-            <Button variant="primary" type="submit">
-              Save Location
-            </Button>
-          </Form>
-        </Offcanvas.Body>
-      </Offcanvas>
+      <LocationForm
+        show={showOffCanvas}
+        handleClose={handleCloseOffCanvas}
+        handleSubmit={handleSubmit}
+        handleChange={handleChange}
+        locationData={locationData}
+      />
     </>
   );
 };
@@ -268,5 +218,53 @@ const ClickEventHandler = ({ onClick }) => {
 
   return null;
 };
+
+async function getGeoData(address) {
+  const apiKey = import.meta.env.VITE_OPENCAGO_API_KEY;
+  const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
+    address
+  )}&key=${apiKey}&limit=1`;
+
+  try {
+    const response = await axios.get(apiUrl);
+
+    if (
+      response.data &&
+      response.data.results &&
+      response.data.results.length > 0
+    ) {
+      const result = response.data.results[0];
+      const { southwest, northeast } = result.bounds;
+
+      const geoJSONData = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [southwest.lng, southwest.lat],
+                  [southwest.lng, northeast.lat],
+                  [northeast.lng, northeast.lat],
+                  [northeast.lng, southwest.lat],
+                  [southwest.lng, southwest.lat],
+                ],
+              ],
+            },
+          },
+        ],
+      };
+
+      return { result, geoJSONData };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching location data:', error);
+    return null;
+  }
+}
 
 export default MapComponent;

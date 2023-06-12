@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Popup } from 'react-leaflet';
 import { firestore, storage } from './firebase';
 import {
@@ -43,7 +43,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
-const PopupComponent = ({ location }) => {
+const PopupComponent = React.memo(({ location }) => {
   const [comment, setComment] = useState('');
   const [photo, setPhoto] = useState(null);
   const [photos, setPhotos] = useState([]);
@@ -101,7 +101,6 @@ const PopupComponent = ({ location }) => {
   const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (file.size > 3000000) {
-      // File size is larger than 3mb
       alert('File size should not exceed 3MB');
       return;
     }
@@ -147,7 +146,6 @@ const PopupComponent = ({ location }) => {
           </StyledButton>
         </form>
         <Typography variant="h6">Upload Photo</Typography>
-        {/* ... other UI elements */}
         <ImageList variant="masonry" rowHeight={160} cols={3}>
           {photos.map((photo, index) => (
             <ImageListItem key={index}>
@@ -171,7 +169,6 @@ const PopupComponent = ({ location }) => {
           <input type="file" accept="image/*" onChange={handlePhotoChange} />
         )}
 
-        {/* Modal for image display */}
         <Dialog open={open} onClose={handleClose}>
           <DialogTitle>
             <IconButton
@@ -196,6 +193,6 @@ const PopupComponent = ({ location }) => {
       </StyledBox>
     </Popup>
   );
-};
+});
 
 export default PopupComponent;

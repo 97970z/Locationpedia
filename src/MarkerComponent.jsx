@@ -1,7 +1,8 @@
+import React from 'react';
 import { Marker } from 'react-leaflet';
 import PopupComponent from './PopupComponent';
 
-const MarkerComponent = ({ locations }) => {
+const MarkerComponent = React.memo(({ locations }) => {
   return locations.map((location, index) => {
     return (
       <Marker
@@ -13,6 +14,6 @@ const MarkerComponent = ({ locations }) => {
       </Marker>
     );
   });
-};
+});
 
 export default MarkerComponent;

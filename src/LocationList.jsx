@@ -52,11 +52,9 @@ const LocationList = ({ onMoveLocation }) => {
     }
   };
 
-  // Get unique countries
   const countries = [...new Set(locations.map((location) => location.country))];
 
   const renderLocationList = (locationsList) => {
-    // Get current page locations
     const indexOfLastLocation = currentPage * locationsPerPage;
     const indexOfFirstLocation = indexOfLastLocation - locationsPerPage;
     const currentLocations = locationsList.slice(
@@ -124,7 +122,6 @@ const LocationList = ({ onMoveLocation }) => {
     );
   };
 
-  // Generate pagination item
   const pageNumbers = [];
   for (let i = 1; i <= Math.ceil(locations.length / locationsPerPage); i++) {
     pageNumbers.push(
