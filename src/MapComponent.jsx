@@ -8,7 +8,7 @@ import {
   GeoJSON,
   useMap,
 } from 'react-leaflet';
-import { collection, query, onSnapshot, addDoc } from 'firebase/firestore';
+import { collection, query, addDoc, onSnapshot } from 'firebase/firestore';
 import MarkerClusterGroupComponent from './MarkerClusterGroupComponent';
 import SearchBar from './SearchBar';
 import MapUpdater from './MapUpdater';
@@ -39,6 +39,7 @@ const MapComponent = ({ currentLocation }) => {
   useEffect(() => {
     const fetchLocations = async () => {
       const q = query(collection(firestore, 'locations'));
+
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const newLocations = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -213,11 +214,11 @@ const MapComponent = ({ currentLocation }) => {
   );
 };
 
-function UpdateMap({ center }) {
+const UpdateMap = ({ center }) => {
   const map = useMap();
   map.flyTo(center);
   return null;
-}
+};
 
 const ClickEventHandler = ({ onClick }) => {
   const map = useMapEvents({
@@ -227,7 +228,8 @@ const ClickEventHandler = ({ onClick }) => {
   return null;
 };
 
-async function getGeoData(address) {
+// async function getGeoData(address) {
+const getGeoData = async (address) => {
   const apiKey = import.meta.env.VITE_OPENCAGO_API_KEY;
   const apiUrl = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
     address
@@ -273,6 +275,6 @@ async function getGeoData(address) {
     console.error('Error fetching location data:', error);
     return null;
   }
-}
+};
 
 export default MapComponent;

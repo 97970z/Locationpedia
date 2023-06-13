@@ -10,7 +10,7 @@ const MarkerClusterGroupComponent = ({ locations }) => {
     var markers = L.markerClusterGroup();
 
     locations.forEach((location) => {
-      const marker = L.marker([
+      const marker = L.circleMarker([
         location.coordinates.lat,
         location.coordinates.lng,
       ]);
