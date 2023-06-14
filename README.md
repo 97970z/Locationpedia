@@ -29,7 +29,7 @@ Locationpedia는 React 및 Firebase를 사용하여 구축한 웹 사이트입�
 
 ## 이용방법
 
-사이트 : [Locationpedia](map-project-12345-da651.firebaseapp.com)
+사이트 : ([Locationpedia](https://map-project-12345-da651.firebaseapp.com/))
 
 ### 위치 추가
 
